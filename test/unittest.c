@@ -9,12 +9,12 @@
 #endif /* ifndef UNITTEST_MAIN */
 
 unittest("init reserve deinit") {
-	dynarray_t(int) array = dynarray_init(int)(1);
+	dynarray_t(int) array = dynarray_init(int, 1);
 	ensure(array.ptr != NULL);
 	array.ptr[0] = 42;
-	dynarray_reserve(int)(&array, 10);
+	dynarray_reserve(&array, 10);
 	ensure(array.ptr != NULL);
 	array.ptr[9] = 42;
-	dynarray_deinit(int)(&array);
+	dynarray_deinit(&array);
 	ensure(array.ptr == NULL);
 }
