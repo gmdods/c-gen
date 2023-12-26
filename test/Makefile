@@ -18,7 +18,7 @@ test.o: test.c $(TESTS)
 	$(CC) $(CFLAGS) $(TEST) -c $< -o $@
 
 test.out: test.o $(DEPS)
-	$(CC) $(CFLAGS) $(TEST) $? -o $@ && ./$@
+	$(CC) $(CFLAGS) $(TEST) $^ -o $@ && ./$@
 
 clean:
 	rm *.out *.o
