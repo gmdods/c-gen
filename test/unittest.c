@@ -11,9 +11,9 @@
 unittest("init reserve add deinit") {
 	dynarray_t(int) array = dynarray_init(int, 1);
 	ensure(array.ptr != NULL);
-	ensure(array.size == 1);
+	ensure(array.size == 0);
+	ensure(array.capacity == 1);
 	array.ptr[0] = 42;
-	array.size = 0;
 	dynarray_reserve(&array, 10);
 	ensure(array.ptr != NULL);
 
@@ -26,24 +26,18 @@ unittest("init reserve add deinit") {
 	ensure(array.ptr == NULL);
 }
 
-unittest("composite type") {
-	dynarray_t(node_t) list = dynarray_init(node_t, 8);
-	list.size = 0;
-	ensure(list.ptr != NULL);
-	dynarray_add(&list, (node_t){0});
-	size_t tail = 0;
-
+unittest("nodelist") {
+	nodelist_t(uint) list = nodelist_init(uint, 8);
+	ensure(list.array.ptr != NULL);
 	for (size_t i = 0; i != 10; ++i) {
-		list.ptr[tail].index = list.size;
-		tail = list.size;
-		dynarray_add(&list, (node_t){.elt = 4 * i + 1});
+		nodelist_add(&list, 4 * i + 1);
 	}
-	ensure(list.size == 11);
+	ensure(list.array.size == 11);
 
-	for (size_t head = 0, i = 0; (head = list.ptr[head].index) != 0; ++i) {
-		ensure(4 * i + 1 == list.ptr[head].elt);
+	for (size_t head = 0, i = 0; (head = list.array.ptr[head].index) != 0; ++i) {
+		ensure(4 * i + 1 == list.array.ptr[head].elt);
 	}
 
-	dynarray_deinit(&list);
-	ensure(list.ptr == NULL);
+	nodelist_deinit(&list);
+	ensure(list.array.ptr == NULL);
 }

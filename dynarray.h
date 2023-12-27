@@ -44,7 +44,6 @@
 	dynarray_t(type_t) dynarray_init_fn(type_t)(size_t size) { \
 		return (dynarray_t(type_t)){ \
 		    .ptr = calloc(size, sizeof(type_t)), \
-		    .size = size, \
 		    .capacity = size, \
 		}; \
 	} \
