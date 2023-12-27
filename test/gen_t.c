@@ -1,4 +1,4 @@
-#include "dynarray_t.h"
+#include "gen_t.h"
 
 dynarray_define(int)
 dynarray_define(double)

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dynarray_t.h"
+#include "gen_t.h"
 
 #define UNITTEST_MAIN
 #include "unittest.h"

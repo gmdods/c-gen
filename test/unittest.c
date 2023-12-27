@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "dynarray_t.h"
+#include "gen_t.h"
 
 #endif /* ifndef UNITTEST_MAIN */
 

@@ -59,8 +59,7 @@
 		    .capacity = capacity, \
 		}; \
 	} \
-	void dynarray_add_fn(type_t)(dynarray_t(type_t) * array, \
-				      type_t elt) { \
+	void dynarray_add_fn(type_t)(dynarray_t(type_t) * array, type_t elt) { \
 		if (array->capacity == 0) array->capacity = 1; \
 		dynarray_reserve_fn(type_t)(array, 2 * array->capacity); \
 		array->ptr[array->size++] = elt; \
