@@ -1,7 +1,7 @@
 #include "gen_t.h"
 
-dynarray_ensure(dynarray_define, int);
-dynarray_ensure(dynarray_define, uint);
-dynarray_ensure(dynarray_define, double);
+dynarray_types(dynarray_define);
+dynarray_types(dynarray_deduced);
 
-nodelist_ensure(nodelist_define, uint);
+nodelist_types(nodelist_define);
+nodelist_types(nodelist_deduced);

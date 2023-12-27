@@ -30,18 +30,15 @@
 		size_t index; \
 		type_t elt; \
 	} node_t(type_t); \
-	dynarray_declare(node_t(type_t)); \
-	nodelist_t(type_t) { \
+	dynarray_declare(node_t(type_t)) nodelist_t(type_t) { \
 		dynarray_t(node_t(type_t)) array; \
 		size_t tail; \
 	}; \
 	nodelist_t(type_t) nodelist_init_fn(type_t)(size_t); \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) *); \
-	void nodelist_add_fn(type_t)(nodelist_t(type_t) *, type_t); \
-	static_assert(1, STRING(type_t) " nodelist")
+	void nodelist_add_fn(type_t)(nodelist_t(type_t) *, type_t);
 
 #define nodelist_define(type_t) \
-	dynarray_define(node_t(type_t)); \
 	nodelist_t(type_t) nodelist_init_fn(type_t)(size_t size) { \
 		nodelist_t(type_t) \
 		    list = {.array = dynarray_init(node_t(type_t), size)}; \
@@ -61,11 +58,10 @@
 		list->array.ptr[list->tail].index = size; \
 		list->tail = size; \
 	} \
-	static_assert(1, STRING(type_t) " nodelist")
+	dynarray_define(node_t(type_t))
 
-#define nodelist_ensure(F, type_t) \
-	F(type_t); \
+#define nodelist_deduced(type_t) \
 	static_assert(nodelist_type(sizeof, (type_t){0}) == sizeof(type_t), \
-		      STRING(type_t) " nodelist")
+		      STRING(type_t) " nodelist");
 
 #endif // !GEN_NODELIST

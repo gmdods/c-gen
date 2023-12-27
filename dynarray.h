@@ -32,8 +32,7 @@
 	dynarray_t(type_t) dynarray_init_fn(type_t)(size_t); \
 	void dynarray_deinit_fn(type_t)(dynarray_t(type_t) *); \
 	void dynarray_reserve_fn(type_t)(dynarray_t(type_t) *, size_t); \
-	void dynarray_add_fn(type_t)(dynarray_t(type_t) *, type_t); \
-	static_assert(1, STRING(type_t) " dynarray")
+	void dynarray_add_fn(type_t)(dynarray_t(type_t) *, type_t);
 
 #define dynarray_define(type_t) \
 	dynarray_t(type_t) dynarray_init_fn(type_t)(size_t size) { \
@@ -62,12 +61,10 @@
 			dynarray_reserve_fn(type_t)(array, \
 						    2 * array->capacity); \
 		array->ptr[array->size++] = elt; \
-	} \
-	static_assert(1, STRING(type_t) " dynarray")
+	}
 
-#define dynarray_ensure(F, type_t) \
-	F(type_t); \
+#define dynarray_deduced(type_t) \
 	static_assert(dynarray_type(sizeof, (type_t){0}) == sizeof(type_t), \
-		      STRING(type_t) " dynarray")
+		      STRING(type_t) " dynarray");
 
 #endif // !GEN_DYNARRAY
