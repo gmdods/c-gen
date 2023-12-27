@@ -3,8 +3,9 @@
 
 typedef unsigned int uint;
 
-#define GEN_TYPE(F, type) \
+#define dynarray_type(F, type) \
 	_Generic(type, int: F(int), uint: F(uint), double: F(double))
+
 #include "../dynarray.h"
 
 dynarray_declare(int);
