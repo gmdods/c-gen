@@ -43,7 +43,7 @@
 *.pdb
 
 # Testing header
-test/*.h
+test/unittest.h
 
 # Kernel Module Compile Results
 *.mod*
