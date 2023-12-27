@@ -23,10 +23,6 @@
 #define dynarray_add(array_ref, elt) \
 	dynarray_associated(dynarray_add_fn, array_ref, elt)
 
-#define dynarray_assert(type_t) \
-	static_assert(dynarray_type(sizeof, (type_t){0}) == sizeof(type_t), \
-		      STRING(type_t) " dynarray")
-
 #define dynarray_declare(type_t) \
 	dynarray_t(type_t) { \
 		type_t * ptr; \
@@ -37,7 +33,7 @@
 	void dynarray_deinit_fn(type_t)(dynarray_t(type_t) *); \
 	void dynarray_reserve_fn(type_t)(dynarray_t(type_t) *, size_t); \
 	void dynarray_add_fn(type_t)(dynarray_t(type_t) *, type_t); \
-	dynarray_assert(type_t)
+	static_assert(1, STRING(type_t) " dynarray")
 
 #define dynarray_define(type_t) \
 	dynarray_t(type_t) dynarray_init_fn(type_t)(size_t size) { \
@@ -67,6 +63,11 @@
 						    2 * array->capacity); \
 		array->ptr[array->size++] = elt; \
 	} \
-	dynarray_assert(type_t)
+	static_assert(1, STRING(type_t) " dynarray")
+
+#define dynarray_ensure(F, type_t) \
+	F(type_t); \
+	static_assert(dynarray_type(sizeof, (type_t){0}) == sizeof(type_t), \
+		      STRING(type_t) " dynarray")
 
 #endif // !GEN_DYNARRAY

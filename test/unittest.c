@@ -37,6 +37,7 @@ unittest("nodelist") {
 	for (size_t head = 0, i = 0; (head = list.array.ptr[head].index) != 0; ++i) {
 		ensure(4 * i + 1 == list.array.ptr[head].elt);
 	}
+	nodelist_reserve(&list, 20);
 
 	nodelist_deinit(&list);
 	ensure(list.array.ptr == NULL);
