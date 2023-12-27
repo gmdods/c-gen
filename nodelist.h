@@ -37,9 +37,9 @@
 		dynarray_t(node_t(type_t)) array; \
 		size_t tail; \
 	}; \
-	DECLARE(nodelist_t(type_t), nodelist_init_fn(type_t), size_t) \
-	DECLARE(void, nodelist_deinit_fn(type_t), nodelist_t(type_t) *) \
-	DECLARE(void, nodelist_add_fn(type_t), nodelist_t(type_t) *, type_t) \
+	nodelist_t(type_t) nodelist_init_fn(type_t)(size_t); \
+	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) *); \
+	void nodelist_add_fn(type_t)(nodelist_t(type_t) *, type_t); \
 	nodelist_assert(type_t)
 
 #define nodelist_define(type_t) \
@@ -51,6 +51,7 @@
 		return list; \
 	} \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) * list) { \
+		if (!list) return; \
 		dynarray_deinit(&list->array); \
 		list->tail = 0; \
 	} \

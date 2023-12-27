@@ -33,11 +33,10 @@
 		size_t size; \
 		size_t capacity; \
 	}; \
-	DECLARE(dynarray_t(type_t), dynarray_init_fn(type_t), size_t) \
-	DECLARE(void, dynarray_deinit_fn(type_t), dynarray_t(type_t) *) \
-	DECLARE(void, dynarray_reserve_fn(type_t), dynarray_t(type_t) *, \
-		size_t) \
-	DECLARE(void, dynarray_add_fn(type_t), dynarray_t(type_t) *, type_t) \
+	dynarray_t(type_t) dynarray_init_fn(type_t)(size_t); \
+	void dynarray_deinit_fn(type_t)(dynarray_t(type_t) *); \
+	void dynarray_reserve_fn(type_t)(dynarray_t(type_t) *, size_t); \
+	void dynarray_add_fn(type_t)(dynarray_t(type_t) *, type_t); \
 	dynarray_assert(type_t)
 
 #define dynarray_define(type_t) \
