@@ -11,7 +11,7 @@
 #define nodelist_init_fn(type_t) CONCAT(nodelist_init_, type_t)
 #define nodelist_deinit_fn(type_t) CONCAT(nodelist_deinit_, type_t)
 #define nodelist_reserve_fn(type_t) dynarray_reserve_fn(node_t(type_t))
-#define nodelist_cons_fn(type_t) CONCAT(nodelist_cons_, type_t)
+#define nodelist_insert_fn(type_t) CONCAT(nodelist_insert_, type_t)
 #define nodelist_remove_fn(type_t) CONCAT(nodelist_remove_, type_t)
 
 #define nodelist_init(type, sz) nodelist_init_fn(type)(sz)
@@ -23,10 +23,11 @@
 #define nodelist_reserve(list_ref, sz) \
 	nodelist_type(nodelist_reserve_fn, \
 		      (list_ref)->array.ptr->elt)(&(list_ref)->array, sz)
-#define nodelist_cons(list_ref, elt) \
-	nodelist_associated(nodelist_cons_fn, list_ref, elt)
-#define nodelist_remove(list_ref, elt) \
-	nodelist_associated(nodelist_remove_fn, list_ref, elt)
+#define nodelist_cons(list_ref, elt) nodelist_insert(list_ref, 0, elt)
+#define nodelist_insert(list_ref, index, elt) \
+	nodelist_associated(nodelist_insert_fn, list_ref, index, elt)
+#define nodelist_remove(list_ref, index) \
+	nodelist_associated(nodelist_remove_fn, list_ref, index)
 
 #define nodelist_declare(type_t) \
 	typedef struct { \
@@ -39,7 +40,7 @@
 	}; \
 	nodelist_t(type_t) nodelist_init_fn(type_t)(size_t); \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) *); \
-	void nodelist_cons_fn(type_t)(nodelist_t(type_t) *, type_t); \
+	void nodelist_insert_fn(type_t)(nodelist_t(type_t) *, size_t, type_t); \
 	void nodelist_remove_fn(type_t)(nodelist_t(type_t) *, size_t);
 
 #define nodelist_define(type_t) \
@@ -54,21 +55,21 @@
 		dynarray_deinit_fn(node_t(type_t))(&list->array); \
 		*list = (nodelist_t(type_t)){0}; \
 	} \
-	void nodelist_cons_fn(type_t)(nodelist_t(type_t) * list, type_t elt) { \
+	void nodelist_insert_fn(type_t)(nodelist_t(type_t) * list, \
+					size_t prev, type_t elt) { \
 		size_t size = list->array.size; \
 		dynarray_add_fn(node_t(type_t))(&list->array, \
 						(node_t(type_t)){.elt = elt}); \
-		list->array.ptr[size].index = list->array.ptr[0].index; \
-		list->array.ptr[0].index = size; \
+		list->array.ptr[size].index = list->array.ptr[prev].index; \
+		list->array.ptr[prev].index = size; \
 	} \
 	void nodelist_remove_fn(type_t)(nodelist_t(type_t) * list, \
 					size_t prev) { \
-		node_t(type_t) * pred = &list->array.ptr[prev]; \
-		node_t(type_t) * freed = &list->array.ptr[pred->index]; \
-		size_t index = pred->index; \
-		pred->index = freed->index; \
-		freed->index = list->freelist; \
-		freed->elt = (type_t){0}; \
+		size_t index = list->array.ptr[prev].index; \
+		if (index == 0) return; \
+		list->array.ptr[prev].index = list->array.ptr[index].index; \
+		list->array.ptr[index] = \
+		    (node_t(type_t)){.index = list->freelist}; \
 		list->freelist = index; \
 	} \
 	dynarray_define(node_t(type_t))
