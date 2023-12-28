@@ -9,7 +9,7 @@ to generate new template functions.
 ## Containers
 
 - [x] `dynarray.h`
-- [ ] `nodelist.h`
+- [x] `nodelist.h`
 - [ ] `hashmap.h`
 
 ## Downsides
