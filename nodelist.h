@@ -7,7 +7,7 @@
 
 #define node_t(type_t) CONCAT(node_, type_t)
 #define nodelist_t(type_t) struct CONCAT(nodelist_, type_t)
-#define nodelist_store_t(type_t) struct CONCAT(nodelist_store_, type_t)
+#define nodelist_pool_t(type_t) struct CONCAT(nodelist_pool_, type_t)
 
 #define nodelist_deinit_fn(type_t) CONCAT(nodelist_deinit_, type_t)
 #define nodelist_reserve_fn(type_t) dynarray_reserve_fn(node_t(type_t))
@@ -16,24 +16,24 @@
 #define nodelist_uncons_fn(type_t) CONCAT(nodelist_uncons_, type_t)
 #define nodelist_remove_fn(type_t) CONCAT(nodelist_remove_, type_t)
 
-#define nodelist_node(list, pos) (list).store.array.ptr[(pos) -1]
+#define nodelist_node(list, pos) (list).pool.array.ptr[(pos) -1]
 #define nodelist_at(list, pos) nodelist_node(list, pos).elt
 #define nodelist_link(list, pos) nodelist_node(list, pos).index
 
 #define nodelist_init(type, sz) \
 	(nodelist_t(type)) { \
-		.store = (nodelist_store_t(type)) { \
+		.pool = (nodelist_pool_t(type)) { \
 			.array = dynarray_init(node_t(type), sz) \
 		} \
 	}
 #define nodelist_associated(nodelist_fn, list_ref, ...) \
-	nodelist_type(nodelist_fn, (list_ref)->store.array.ptr->elt)( \
+	nodelist_type(nodelist_fn, (list_ref)->pool.array.ptr->elt)( \
 	    list_ref __VA_OPT__(, ) __VA_ARGS__)
 #define nodelist_deinit(list_ref) \
 	nodelist_associated(nodelist_deinit_fn, list_ref)
 #define nodelist_reserve(list_ref, sz) \
-	nodelist_type(nodelist_reserve_fn, (list_ref)->store.array.ptr->elt)( \
-	    &(list_ref)->store.array, sz)
+	nodelist_type(nodelist_reserve_fn, (list_ref)->pool.array.ptr->elt)( \
+	    &(list_ref)->pool.array, sz)
 #define nodelist_cons(list_ref, elt) \
 	nodelist_associated(nodelist_cons_fn, list_ref, elt)
 #define nodelist_insert(list_ref, index, elt) \
@@ -50,11 +50,11 @@
 	} node_t(type_t); \
 	dynarray_declare(node_t(type_t)) nodelist_t(type_t) { \
 		size_t head; \
-		nodelist_store_t(type_t) { \
+		nodelist_pool_t(type_t) { \
 			dynarray_t(node_t(type_t)) array; \
 			size_t freelist; \
 		} \
-		store; \
+		pool; \
 	}; \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) *); \
 	size_t nodelist_cons_fn(type_t)(nodelist_t(type_t) *, type_t); \
@@ -66,13 +66,13 @@
 #define nodelist_define(type_t) \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) * list) { \
 		if (!list) return; \
-		dynarray_deinit_fn(node_t(type_t))(&list->store.array); \
+		dynarray_deinit_fn(node_t(type_t))(&list->pool.array); \
 		*list = (nodelist_t(type_t)){0}; \
 	} \
 	size_t nodelist_cons_fn(type_t)(nodelist_t(type_t) * list, \
 					type_t elt) { \
-		size_t size = list->store.array.size; \
-		dynarray_add_fn(node_t(type_t))(&list->store.array, \
+		size_t size = list->pool.array.size; \
+		dynarray_add_fn(node_t(type_t))(&list->pool.array, \
 						(node_t(type_t)){.elt = elt}); \
 		nodelist_link(*list, size + 1) = list->head; \
 		list->head = size + 1; \
@@ -81,8 +81,8 @@
 	size_t nodelist_insert_fn(type_t)(nodelist_t(type_t) * list, \
 					  size_t prev, type_t elt) { \
 		if (prev == 0) return nodelist_cons_fn(type_t)(list, elt); \
-		size_t size = list->store.array.size; \
-		dynarray_add_fn(node_t(type_t))(&list->store.array, \
+		size_t size = list->pool.array.size; \
+		dynarray_add_fn(node_t(type_t))(&list->pool.array, \
 						(node_t(type_t)){.elt = elt}); \
 		nodelist_link(*list, size + 1) = nodelist_link(*list, prev); \
 		nodelist_link(*list, prev) = size + 1; \
@@ -93,8 +93,8 @@
 		if (index == 0) return 0; \
 		list->head = nodelist_link(*list, index); \
 		nodelist_node(*list, index) = \
-		    (node_t(type_t)){.index = list->store.freelist}; \
-		list->store.freelist = index; \
+		    (node_t(type_t)){.index = list->pool.freelist}; \
+		list->pool.freelist = index; \
 		return index; \
 	} \
 	size_t nodelist_remove_fn(type_t)(nodelist_t(type_t) * list, \
@@ -104,8 +104,8 @@
 		if (index == 0) return 0; \
 		nodelist_link(*list, prev) = nodelist_link(*list, index); \
 		nodelist_node(*list, index) = \
-		    (node_t(type_t)){.index = list->store.freelist}; \
-		list->store.freelist = index; \
+		    (node_t(type_t)){.index = list->pool.freelist}; \
+		list->pool.freelist = index; \
 		return index; \
 	} \
 	dynarray_define(node_t(type_t))
