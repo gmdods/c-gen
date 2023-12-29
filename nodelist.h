@@ -15,8 +15,9 @@
 #define nodelist_uncons_fn(type_t) CONCAT(nodelist_uncons_, type_t)
 #define nodelist_remove_fn(type_t) CONCAT(nodelist_remove_, type_t)
 
-#define nodelist_at(list, pos) (list).array.ptr[(pos) -1].elt
-#define nodelist_link(list, pos) (list).array.ptr[(pos) -1].index
+#define nodelist_node(list, pos) (list).array.ptr[(pos) -1]
+#define nodelist_at(list, pos) nodelist_node(list, pos).elt
+#define nodelist_link(list, pos) nodelist_node(list, pos).index
 #define nodelist_init(type, sz) \
 	(nodelist_t(type)) { .array = dynarray_init(node_t(type), sz) }
 #define nodelist_associated(nodelist_fn, list_ref, ...) \
@@ -74,14 +75,14 @@
 		size_t size = list->array.size; \
 		dynarray_add_fn(node_t(type_t))(&list->array, \
 						(node_t(type_t)){.elt = elt}); \
-		list->array.ptr[size].index = list->array.ptr[prev - 1].index; \
-		list->array.ptr[prev - 1].index = size + 1; \
+		nodelist_link(*list, size + 1) = nodelist_link(*list, prev); \
+		nodelist_link(*list, prev) = size + 1; \
 	} \
 	void nodelist_uncons_fn(type_t)(nodelist_t(type_t) * list) { \
 		size_t index = list->head; \
 		if (index == 0) return; \
-		list->head = list->array.ptr[index - 1].index; \
-		list->array.ptr[index - 1] = \
+		list->head = nodelist_link(*list, index); \
+		nodelist_node(*list, index) = \
 		    (node_t(type_t)){.index = list->freelist}; \
 		list->freelist = index; \
 	} \
@@ -91,11 +92,10 @@
 			nodelist_uncons_fn(type_t)(list); \
 			return; \
 		} \
-		size_t index = list->array.ptr[prev - 1].index; \
+		size_t index = nodelist_link(*list, prev); \
 		if (index == 0) return; \
-		list->array.ptr[prev - 1].index = \
-		    list->array.ptr[index - 1].index; \
-		list->array.ptr[index - 1] = \
+		nodelist_link(*list, prev) = nodelist_link(*list, index); \
+		nodelist_node(*list, index) = \
 		    (node_t(type_t)){.index = list->freelist}; \
 		list->freelist = index; \
 	} \
