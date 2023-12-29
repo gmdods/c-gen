@@ -87,7 +87,20 @@ unittest("nodelist") {
 
 unittest("hashmap") {
 	hashmap_t(uint, boolean) map = hashmap_init(uint, boolean, 8, 16);
-	hashmap_add(&map, (keyval_t(uint, boolean)){.key = 3, .val = true});
-	hashmap_add(&map, (keyval_t(uint, boolean)){.key = 19, .val = true});
+	hashmap_reserve(&map, 2);
+
+	hashmap_add(&map, ((keyval_t(uint, boolean)){.key = 3, .val = true}));
+	hashmap_add(&map, ((keyval_t(uint, boolean)){.key = 19, .val = true}));
+
+	ensure(hashmap_lookup(map, 3));
 	ensure(hashmap_lookup(map, 19));
+
+	hashmap_del(&map, 3);
+	ensure(!hashmap_lookup(map, 3));
+	hashmap_del(&map, 19);
+	ensure(!hashmap_lookup(map, 19));
+
+	hashmap_deinit(&map);
+	ensure(map.array.ptr == NULL);
+	ensure(map.list.array.ptr == NULL);
 }

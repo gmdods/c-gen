@@ -9,8 +9,9 @@
 #define hashmap_t(key_t, val_t) struct CONCAT(hashmap_, keyval_t(key_t, val_t))
 
 #define hashmap_deinit_fn(kv_t) CONCAT(hashmap_deinit_, kv_t)
-#define hashmap_reserve_fn(kv_t) dynarray_reserve_fn(kv_t)
+#define hashmap_reserve_fn(kv_t) nodelist_reserve_fn(kv_t)
 #define hashmap_add_fn(kv_t) CONCAT(hashmap_add_, kv_t)
+#define hashmap_del_fn(kv_t) CONCAT(hashmap_del_, kv_t)
 #define hashmap_lookup_fn(kv_t) CONCAT(hashmap_lookup_, kv_t)
 
 #define hashmap_init(key_t, val_t, sz, sl) \
@@ -24,12 +25,14 @@
 #define hashmap_trait(hashmap_fn, map, ...) \
 	hashmap_type(hashmap_fn, (map).list.array.ptr->elt)(map __VA_OPT__(, ) \
 								__VA_ARGS__)
-#define hashmap_deinit(map_ref) hashmap_associated(hashmap_deinit_fn, list_ref)
+#define hashmap_deinit(map_ref) hashmap_associated(hashmap_deinit_fn, map_ref)
 #define hashmap_reserve(map_ref, sz) \
-	hashmap_type(hashmap_reserve_fn, \
-		     (map_ref)->array.ptr->elt)(&(list_ref)->array, sz)
-#define hashmap_add(map_ref, index, elt) \
-	hashmap_associated(hashmap_add_fn, map_ref, index, elt)
+	hashmap_type(hashmap_reserve_fn, (map_ref)->list.array.ptr->elt)( \
+	    &(map_ref)->list.array, sz)
+#define hashmap_add(map_ref, elt) \
+	hashmap_associated(hashmap_add_fn, map_ref, elt)
+#define hashmap_del(map_ref, key) \
+	hashmap_associated(hashmap_del_fn, map_ref, key)
 #define hashmap_lookup(map, key) hashmap_trait(hashmap_lookup_fn, map, key)
 
 #define hashmap_declare(key_t, val_t) \
@@ -44,8 +47,10 @@
 	}; \
 	void hashmap_deinit_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) *); \
-	void hashmap_add_fn(keyval_t(key_t, val_t))( \
-	    hashmap_t(key_t, val_t) *, keyval_t(key_t, val_t)); \
+	void hashmap_add_fn(keyval_t(key_t, val_t))(hashmap_t(key_t, val_t) *, \
+						    keyval_t(key_t, val_t)); \
+	void hashmap_del_fn(keyval_t(key_t, val_t))(hashmap_t(key_t, val_t) *, \
+						    key_t); \
 	val_t hashmap_lookup_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t), key_t);
 
@@ -66,6 +71,22 @@
 		if (chain == 0) \
 			map->array.size += 1, \
 			    dynarray_at(map->array, slot) = index; \
+	} \
+	void hashmap_del_fn(keyval_t(key_t, val_t))( \
+	    hashmap_t(key_t, val_t) * map, key_t key) { \
+		size_t slot = key & (map->array.capacity - 1); \
+		size_t chain = dynarray_at(map->array, slot); \
+		nodelist_t(keyval_t(key_t, val_t)) proxy = map->list; \
+		proxy.head = chain; \
+		for (size_t prev = 0, head = chain; head; \
+		     prev = head, head = nodelist_link(map->list, head)) { \
+			if (nodelist_at(map->list, head).key == key) { \
+				nodelist_remove_fn(keyval_t(key_t, val_t))( \
+				    &proxy, prev); \
+				dynarray_at(map->array, slot) = proxy.head; \
+				map->list = proxy; \
+			} \
+		} \
 	} \
 	val_t hashmap_lookup_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) map, key_t key) { \
