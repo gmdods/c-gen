@@ -17,7 +17,7 @@
 #define hashmap_init(key_t, val_t, sz, sl) \
 	(hashmap_t(key_t, val_t)) { \
 		.array = dynarray_init(size_t, sl), \
-		.list = nodelist_init(keyval_t(key_t, val_t), sz) \
+		.list = nodelist_init(keyval_t(key_t, val_t), sz).store \
 	}
 #define hashmap_associated(hashmap_fn, map_ref, ...) \
 	hashmap_type(hashmap_fn, (map_ref)->list.array.ptr->elt)( \
@@ -43,7 +43,7 @@
 	dynarray_declare(size_t) nodelist_declare(keyval_t(key_t, val_t)) \
 	    hashmap_t(key_t, val_t) { \
 		dynarray_t(size_t) array; \
-		nodelist_t(keyval_t(key_t, val_t)) list; \
+		nodelist_store_t(keyval_t(key_t, val_t)) list; \
 	}; \
 	void hashmap_deinit_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) *); \
@@ -59,43 +59,47 @@
 	    hashmap_t(key_t, val_t) * map) { \
 		if (!map) return; \
 		dynarray_deinit_fn(size_t)(&map->array); \
-		nodelist_deinit_fn(keyval_t(key_t, val_t))(&map->list); \
+		dynarray_deinit_fn(node_t(keyval_t(key_t, val_t)))( \
+		    &map->list.array); \
 		*map = (hashmap_t(key_t, val_t)){0}; \
 	} \
 	void hashmap_add_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, keyval_t(key_t, val_t) elt) { \
 		size_t slot = elt.key & (map->array.capacity - 1); \
-		size_t chain = dynarray_at(map->array, slot); \
-		size_t index = nodelist_insert_fn(keyval_t(key_t, val_t))( \
-		    &map->list, chain, elt); \
-		if (chain == 0) \
-			map->array.size += 1, \
-			    dynarray_at(map->array, slot) = index; \
+		nodelist_t(keyval_t(key_t, val_t)) \
+		    node = {.head = dynarray_at(map->array, slot), \
+			    .store = map->list}; \
+		map->array.size += (node.head == 0); \
+		nodelist_cons_fn(keyval_t(key_t, val_t))(&node, elt); \
+		map->list = node.store; \
+		dynarray_at(map->array, slot) = node.head; \
 	} \
 	void hashmap_del_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, key_t key) { \
 		size_t slot = key & (map->array.capacity - 1); \
-		size_t chain = dynarray_at(map->array, slot); \
-		nodelist_t(keyval_t(key_t, val_t)) proxy = map->list; \
-		proxy.head = chain; \
-		for (size_t prev = 0, head = chain; head; \
-		     prev = head, head = nodelist_link(map->list, head)) { \
-			if (nodelist_at(map->list, head).key == key) { \
+		nodelist_t(keyval_t(key_t, val_t)) \
+		    node = {.head = dynarray_at(map->array, slot), \
+			    .store = map->list}; \
+		for (size_t prev = 0, head = node.head; head; \
+		     prev = head, head = nodelist_link(node, head)) { \
+			if (nodelist_at(node, head).key == key) { \
+				map->array.size -= (prev == 0); \
 				nodelist_remove_fn(keyval_t(key_t, val_t))( \
-				    &proxy, prev); \
-				dynarray_at(map->array, slot) = proxy.head; \
-				map->list = proxy; \
+				    &node, prev); \
+				map->list = node.store; \
+				dynarray_at(map->array, slot) = node.head; \
 			} \
 		} \
 	} \
 	val_t hashmap_lookup_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) map, key_t key) { \
 		size_t slot = key & (map.array.capacity - 1); \
-		size_t chain = dynarray_at(map.array, slot); \
-		for (size_t head = chain; head; \
-		     head = nodelist_link(map.list, head)) { \
-			if (nodelist_at(map.list, head).key == key) { \
-				return nodelist_at(map.list, head).val; \
+		nodelist_t(keyval_t(key_t, val_t)) node = { \
+		    .head = dynarray_at(map.array, slot), .store = map.list}; \
+		for (size_t head = node.head; head; \
+		     head = nodelist_link(node, head)) { \
+			if (nodelist_at(node, head).key == key) { \
+				return nodelist_at(node, head).val; \
 			} \
 		} \
 		return (val_t){0}; \

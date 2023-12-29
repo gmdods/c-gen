@@ -36,12 +36,12 @@ unittest("dynarray : init reserve add deinit") {
 
 unittest("nodelist") {
 	nodelist_t(uint) list = nodelist_init(uint, 8);
-	ensure(list.array.ptr != NULL);
+	ensure(list.store.array.ptr != NULL);
 	const size_t nodes = 10;
 	for (size_t i = 1; i != nodes; ++i) {
 		nodelist_cons(&list, 4 * i + 1);
 	}
-	ensure(list.array.size == nodes - 1);
+	ensure(list.store.array.size == nodes - 1);
 	nodelist_insert(&list, 1, 1);
 
 	{
@@ -74,7 +74,7 @@ unittest("nodelist") {
 	}
 	{
 		size_t index = 0;
-		for (size_t freelist = list.freelist; freelist;
+		for (size_t freelist = list.store.freelist; freelist;
 		     freelist = nodelist_link(list, freelist), ++index) {
 			ensure(!nodelist_at(list, freelist));
 		}
@@ -82,7 +82,7 @@ unittest("nodelist") {
 	}
 
 	nodelist_deinit(&list);
-	ensure(list.array.ptr == NULL);
+	ensure(list.store.array.ptr == NULL);
 }
 
 unittest("hashmap") {
@@ -94,11 +94,14 @@ unittest("hashmap") {
 
 	ensure(hashmap_lookup(map, 3));
 	ensure(hashmap_lookup(map, 19));
+	ensure(map.array.size == 1);
 
 	hashmap_del(&map, 3);
 	ensure(!hashmap_lookup(map, 3));
+	ensure(map.array.size == 1);
 	hashmap_del(&map, 19);
 	ensure(!hashmap_lookup(map, 19));
+	ensure(map.array.size == 0);
 
 	hashmap_deinit(&map);
 	ensure(map.array.ptr == NULL);
