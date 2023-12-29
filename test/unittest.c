@@ -27,7 +27,7 @@ unittest("init reserve add deinit") {
 
 	ensure(dynarray_at(array, 0) == 42);
 	for (size_t i = 0; i != 10; ++i) {
-		ensure(dynarray_at(array, i+ 1) == (int) (i + 1));
+		ensure(dynarray_at(array, i + 1) == (int) (i + 1));
 	}
 
 	dynarray_deinit(&array);
@@ -41,13 +41,13 @@ unittest("nodelist") {
 	for (size_t i = 1; i != nodes; ++i) {
 		nodelist_cons(&list, 4 * i + 1);
 	}
-	ensure(list.array.size == nodes);
+	ensure(list.array.size == nodes - 1);
 	nodelist_insert(&list, 1, 1);
 
 	size_t index = 0;
 
 	index = nodes;
-	for (size_t head = 0; (head = nodelist_link(list, head));) {
+	for (size_t head = list.head; head; head = nodelist_link(list, head)) {
 		if (1 == nodelist_at(list, head))
 			ensure(index == 1);
 		else
@@ -62,7 +62,7 @@ unittest("nodelist") {
 
 	index = nodes;
 	index -= 1; // removed node
-	for (size_t head = 0; (head = nodelist_link(list, head));) {
+	for (size_t head = list.head; head; head = nodelist_link(list, head)) {
 		index -= 1 + (index == 3); // removed node
 		ensure(4 * index + 1 == nodelist_at(list, head));
 	}
