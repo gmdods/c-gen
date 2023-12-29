@@ -9,7 +9,7 @@
 
 #endif /* ifndef UNITTEST_MAIN */
 
-unittest("init reserve add deinit") {
+unittest("dynarray : init reserve add deinit") {
 	dynarray_t(int) array = dynarray_init(int, 1);
 	ensure(array.ptr != NULL);
 	ensure(array.size == 0);
@@ -77,4 +77,38 @@ unittest("nodelist") {
 
 	nodelist_deinit(&list);
 	ensure(list.array.ptr == NULL);
+}
+
+unittest("hashmap") {
+	nodelist_t(keyval_t) list = nodelist_init(keyval_t, 8);
+	dynarray_t(size_t) array = dynarray_init(size_t, 16);
+	{
+		keyval_t map1 = {.key = 3, .val = true};
+		size_t slot = map1.key & 0xF;
+		size_t index = nodelist_cons(&list, map1);
+		array.size += 1;
+		dynarray_at(array, slot) = index;
+	}
+	{
+		keyval_t map2 = {.key = 19, .val = true};
+		size_t slot = map2.key & 0xF;
+		size_t chain = dynarray_at(array, slot);
+		size_t index = nodelist_insert(&list, chain, map2);
+		array.size += 1;
+		if (chain == 0) dynarray_at(array, slot) = index;
+	}
+	{
+		uint key = 3;
+		size_t slot = key & 0xF;
+		size_t chain = dynarray_at(array, slot);
+		bool val = false;
+		for (size_t head = chain; head;
+		     head = nodelist_link(list, head)) {
+			if (nodelist_at(list, head).key == key) {
+				val = true;
+				break;
+			}
+		}
+		ensure(val);
+	}
 }

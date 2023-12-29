@@ -49,7 +49,8 @@
 	}; \
 	void nodelist_deinit_fn(type_t)(nodelist_t(type_t) *); \
 	size_t nodelist_cons_fn(type_t)(nodelist_t(type_t) *, type_t); \
-	size_t nodelist_insert_fn(type_t)(nodelist_t(type_t) *, size_t, type_t); \
+	size_t nodelist_insert_fn(type_t)(nodelist_t(type_t) *, size_t, \
+					  type_t); \
 	size_t nodelist_uncons_fn(type_t)(nodelist_t(type_t) *); \
 	size_t nodelist_remove_fn(type_t)(nodelist_t(type_t) *, size_t);
 
@@ -64,7 +65,7 @@
 		size_t size = list->array.size; \
 		dynarray_add_fn(node_t(type_t))(&list->array, \
 						(node_t(type_t)){.elt = elt}); \
-		list->array.ptr[size].index = list->head; \
+		nodelist_link(*list, size + 1) = list->head; \
 		list->head = size + 1; \
 		return size + 1; \
 	} \
