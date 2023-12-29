@@ -107,3 +107,11 @@ unittest("hashmap") {
 	ensure(map.array.ptr == NULL);
 	ensure(map.list.array.ptr == NULL);
 }
+
+unittest("string hashmap") {
+	hashmap_t(string, uint) map = hashmap_init(string, uint, 8, 16);
+	hashmap_at(&map, "let") = 1;
+	hashmap_at(&map, "fn") = 3;
+	ensure(map.array.size == 2);
+	hashmap_deinit(&map);
+}

@@ -10,7 +10,7 @@ to generate new template functions.
 
 - [x] `dynarray.h`
 - [x] `nodelist.h`
-- [ ] `hashmap.h`
+- [x] `hashmap.h`
 
 ## Downsides
 
