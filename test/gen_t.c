@@ -5,3 +5,5 @@ dynarray_types(dynarray_deduced);
 
 nodelist_types(nodelist_define);
 nodelist_types(nodelist_deduced);
+
+hashmap_types(hashmap_define);

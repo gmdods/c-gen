@@ -44,71 +44,50 @@ unittest("nodelist") {
 	ensure(list.array.size == nodes - 1);
 	nodelist_insert(&list, 1, 1);
 
-	size_t index = 0;
-
-	index = nodes;
-	for (size_t head = list.head; head; head = nodelist_link(list, head)) {
-		if (1 == nodelist_at(list, head))
-			ensure(index == 1);
-		else
-			ensure(4 * (--index) + 1 == nodelist_at(list, head));
+	{
+		size_t index = nodes;
+		for (size_t head = list.head; head;
+		     head = nodelist_link(list, head)) {
+			if (1 == nodelist_at(list, head))
+				ensure(index == 1);
+			else
+				ensure(4 * (--index) + 1 ==
+				       nodelist_at(list, head));
+		}
+		ensure(index == 1);
 	}
-	ensure(index == 1);
 	nodelist_reserve(&list, 20);
 
 	nodelist_remove(&list, 0);
 	nodelist_remove(&list, 1);
 	nodelist_remove(&list, 3);
 
-	index = nodes;
-	index -= 1; // removed node
-	for (size_t head = list.head; head; head = nodelist_link(list, head)) {
-		index -= 1 + (index == 3); // removed node
-		ensure(4 * index + 1 == nodelist_at(list, head));
+	{
+		size_t index = nodes;
+		index -= 1; // removed node
+		for (size_t head = list.head; head;
+		     head = nodelist_link(list, head)) {
+			index -= 1 + (index == 3); // removed node
+			ensure(4 * index + 1 == nodelist_at(list, head));
+		}
+		ensure(index == 1);
 	}
-	ensure(index == 1);
-
-	index = 0;
-	for (size_t freelist = list.freelist; freelist;
-	     freelist = nodelist_link(list, freelist), ++index) {
-		ensure(!nodelist_at(list, freelist));
+	{
+		size_t index = 0;
+		for (size_t freelist = list.freelist; freelist;
+		     freelist = nodelist_link(list, freelist), ++index) {
+			ensure(!nodelist_at(list, freelist));
+		}
+		ensure(index == 3);
 	}
-	ensure(index == 3);
 
 	nodelist_deinit(&list);
 	ensure(list.array.ptr == NULL);
 }
 
 unittest("hashmap") {
-	nodelist_t(keyval_t) list = nodelist_init(keyval_t, 8);
-	dynarray_t(size_t) array = dynarray_init(size_t, 16);
-	{
-		keyval_t map1 = {.key = 3, .val = true};
-		size_t slot = map1.key & 0xF;
-		size_t index = nodelist_cons(&list, map1);
-		array.size += 1;
-		dynarray_at(array, slot) = index;
-	}
-	{
-		keyval_t map2 = {.key = 19, .val = true};
-		size_t slot = map2.key & 0xF;
-		size_t chain = dynarray_at(array, slot);
-		size_t index = nodelist_insert(&list, chain, map2);
-		array.size += 1;
-		if (chain == 0) dynarray_at(array, slot) = index;
-	}
-	{
-		uint key = 3;
-		size_t slot = key & 0xF;
-		size_t chain = dynarray_at(array, slot);
-		bool val = false;
-		for (size_t head = chain; head;
-		     head = nodelist_link(list, head)) {
-			if (nodelist_at(list, head).key == key) {
-				val = true;
-				break;
-			}
-		}
-		ensure(val);
-	}
+	hashmap_t(uint, boolean) map = hashmap_init(uint, boolean, 8, 16);
+	hashmap_add(&map, (keyval_t(uint, boolean)){.key = 3, .val = true});
+	hashmap_add(&map, (keyval_t(uint, boolean)){.key = 19, .val = true});
+	ensure(hashmap_lookup(map, 19));
 }
