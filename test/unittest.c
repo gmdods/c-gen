@@ -14,14 +14,21 @@ unittest("init reserve add deinit") {
 	ensure(array.ptr != NULL);
 	ensure(array.size == 0);
 	ensure(array.capacity == 1);
-	array.ptr[0] = 42;
+
+	dynarray_add(&array, 0);
+	dynarray_at(array, 0) = 42;
 	dynarray_reserve(&array, 10);
 	ensure(array.ptr != NULL);
 
 	for (size_t i = 0; i != 10; ++i) {
 		dynarray_add(&array, i + 1);
 	}
-	ensure(array.size == 10);
+	ensure(array.size == 11);
+
+	ensure(dynarray_at(array, 0) == 42);
+	for (size_t i = 0; i != 10; ++i) {
+		ensure(dynarray_at(array, i+ 1) == (int) (i + 1));
+	}
 
 	dynarray_deinit(&array);
 	ensure(array.ptr == NULL);
@@ -40,11 +47,11 @@ unittest("nodelist") {
 	size_t index = 0;
 
 	index = nodes;
-	for (size_t head = 0; (head = list.array.ptr[head].index);) {
-		if (1 == list.array.ptr[head].elt)
+	for (size_t head = 0; (head = nodelist_link(list, head));) {
+		if (1 == nodelist_at(list, head))
 			ensure(index == 1);
 		else
-			ensure(4 * (--index) + 1 == list.array.ptr[head].elt);
+			ensure(4 * (--index) + 1 == nodelist_at(list, head));
 	}
 	ensure(index == 1);
 	nodelist_reserve(&list, 20);
@@ -55,16 +62,16 @@ unittest("nodelist") {
 
 	index = nodes;
 	index -= 1; // removed node
-	for (size_t head = 0; (head = list.array.ptr[head].index);) {
+	for (size_t head = 0; (head = nodelist_link(list, head));) {
 		index -= 1 + (index == 3); // removed node
-		ensure(4 * index + 1 == list.array.ptr[head].elt);
+		ensure(4 * index + 1 == nodelist_at(list, head));
 	}
 	ensure(index == 1);
 
 	index = 0;
 	for (size_t freelist = list.freelist; freelist;
-	     freelist = list.array.ptr[freelist].index, ++index) {
-		ensure(!list.array.ptr[freelist].elt);
+	     freelist = nodelist_link(list, freelist), ++index) {
+		ensure(!nodelist_at(list, freelist));
 	}
 	ensure(index == 3);
 

@@ -12,6 +12,7 @@
 #define dynarray_reserve_fn(type_t) CONCAT(dynarray_reserve_, type_t)
 #define dynarray_add_fn(type_t) CONCAT(dynarray_add_, type_t)
 
+#define dynarray_at(array, pos) (array).ptr[pos]
 #define dynarray_init(type, sz) dynarray_init_fn(type)(sz)
 #define dynarray_associated(dynarray_fn, array_ref, ...) \
 	dynarray_type(dynarray_fn, \

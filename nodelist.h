@@ -14,6 +14,8 @@
 #define nodelist_insert_fn(type_t) CONCAT(nodelist_insert_, type_t)
 #define nodelist_remove_fn(type_t) CONCAT(nodelist_remove_, type_t)
 
+#define nodelist_at(list, pos) (list).array.ptr[(pos)].elt
+#define nodelist_link(list, pos) (list).array.ptr[(pos)].index
 #define nodelist_init(type, sz) nodelist_init_fn(type)(sz)
 #define nodelist_associated(nodelist_fn, list_ref, ...) \
 	nodelist_type(nodelist_fn, (list_ref)->array.ptr->elt)( \
