@@ -16,7 +16,7 @@
 
 #define hashmap_init(key_t, val_t, sz, sl) \
 	(hashmap_t(key_t, val_t)) { \
-		.array = dynarray_init(size_t, sl), \
+		.arena = arena_init(size_t, sl), \
 		.list = nodelist_init(keyval_t(key_t, val_t), sz).pool \
 	}
 #define hashmap_reserve(map_ref, sz) \
@@ -44,7 +44,7 @@
 		val_t val; \
 	} keyval_t(key_t, val_t); \
 	nodelist_declare(keyval_t(key_t, val_t)) hashmap_t(key_t, val_t) { \
-		dynarray_t(size_t) array; \
+		arena_t(size_t) arena; \
 		nodelist_pool_t(keyval_t(key_t, val_t)) list; \
 	}; \
 	void hashmap_deinit_fn(keyval_t(key_t, val_t))( \
@@ -62,43 +62,41 @@
 	void hashmap_deinit_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map) { \
 		if (!map) return; \
-		dynarray_deinit_fn(size_t)(&map->array); \
-		dynarray_deinit_fn(node_t(keyval_t(key_t, val_t)))( \
-		    &map->list.array); \
+		arena_deinit_fn(size_t)(&map->arena); \
+		arena_deinit_fn(node_t(keyval_t(key_t, val_t)))( \
+		    &map->list.array.arena); \
 		*map = (hashmap_t(key_t, val_t)){0}; \
 	} \
 	void hashmap_add_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, keyval_t(key_t, val_t) elt) { \
 		size_t slot = \
-		    hashmap_hash(elt.key) & (map->array.arena.storage - 1); \
+		    hashmap_hash(elt.key) & (map->arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
-		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
-		map->array.size += (node.head == 0); \
+		    .head = arena_at(map->arena, slot), .pool = map->list}; \
 		nodelist_cons_fn(keyval_t(key_t, val_t))(&node, elt); \
 		map->list = node.pool; \
-		dynarray_at(map->array, slot) = node.head; \
+		arena_at(map->arena, slot) = node.head; \
 	} \
 	void hashmap_del_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map->array.arena.storage - 1); \
+		size_t slot = hashmap_hash(key) & (map->arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
-		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
+		    .head = arena_at(map->arena, slot), .pool = map->list}; \
 		for (size_t prev = 0, head = node.head; head; \
 		     prev = head, head = nodelist_link(node, head)) { \
 			if (nodelist_at(node, head).key == key) { \
-				map->array.size -= (prev == 0); \
 				nodelist_remove_fn(keyval_t(key_t, val_t))( \
 				    &node, prev); \
 				map->list = node.pool; \
-				dynarray_at(map->array, slot) = node.head; \
+				arena_at(map->arena, slot) = node.head; \
 			} \
 		} \
 	} \
 	val_t hashmap_lookup_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map.array.arena.storage - 1); \
+		size_t slot = hashmap_hash(key) & (map.arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
-		    .head = dynarray_at(map.array, slot), .pool = map.list}; \
+		    .head = arena_at(map.arena, slot), .pool = map.list}; \
 		for (size_t head = node.head; head; \
 		     head = nodelist_link(node, head)) { \
 			if (nodelist_at(node, head).key == key) { \
@@ -109,20 +107,19 @@
 	} \
 	val_t * hashmap_at_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map->array.arena.storage - 1); \
+		size_t slot = hashmap_hash(key) & (map->arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
-		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
+		    .head = arena_at(map->arena, slot), .pool = map->list}; \
 		for (size_t head = node.head; head; \
 		     head = nodelist_link(node, head)) { \
 			if (nodelist_at(node, head).key == key) { \
 				return &nodelist_at(node, head).val; \
 			} \
 		} \
-		map->array.size += (node.head == 0); \
 		nodelist_cons_fn(keyval_t(key_t, val_t))( \
 		    &node, (keyval_t(key_t, val_t)){.key = key}); \
 		map->list = node.pool; \
-		dynarray_at(map->array, slot) = node.head; \
+		arena_at(map->arena, slot) = node.head; \
 		return &nodelist_at(node, node.head).val; \
 	} \
 	nodelist_define(keyval_t(key_t, val_t))

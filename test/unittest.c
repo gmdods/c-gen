@@ -94,17 +94,30 @@ unittest("hashmap") {
 
 	ensure(hashmap_lookup(map, 3));
 	ensure(hashmap_lookup(map, 19));
-	ensure(map.array.size == 1);
+	ensure(map.list.array.size == 2);
+	{
+		size_t chains = 0;
+		for (size_t i = 0; i != map.arena.storage; ++i)
+			chains += (arena_at(map.arena, i) != 0);
+		ensure(chains == 1);
+	}
 
 	hashmap_del(&map, 3);
 	ensure(!hashmap_lookup(map, 3));
-	ensure(map.array.size == 1);
 	hashmap_del(&map, 19);
 	ensure(!hashmap_lookup(map, 19));
-	ensure(map.array.size == 0);
+	{
+		size_t frees = 0;
+		nodelist_t(keyval_t(uint, boolean)) node = {.pool = map.list};
+		for (size_t freelist = map.list.freelist; freelist;
+		     freelist = nodelist_link(node, freelist))
+			++frees;
+		ensure(frees == 2);
+	}
+	ensure(map.list.array.size == 2);
 
 	hashmap_deinit(&map);
-	ensure(map.array.arena.ptr == NULL);
+	ensure(map.arena.ptr == NULL);
 	ensure(map.list.array.arena.ptr == NULL);
 }
 
@@ -112,6 +125,14 @@ unittest("string hashmap") {
 	hashmap_t(string, uint) map = hashmap_init(string, uint, 8, 16);
 	hashmap_at(&map, "let") = 1;
 	hashmap_at(&map, "fn") = 3;
-	ensure(map.array.size == 2);
+
+	ensure(map.list.array.size == 2);
+	{
+		size_t chains = 0;
+		for (size_t i = 0; i != map.arena.storage; ++i)
+			chains += (arena_at(map.arena, i) != 0);
+		ensure(chains == 2);
+	}
+
 	hashmap_deinit(&map);
 }
