@@ -9,7 +9,6 @@
 #define hashmap_t(key_t, val_t) struct CONCAT(hashmap_, keyval_t(key_t, val_t))
 
 #define hashmap_deinit_fn(kv_t) CONCAT(hashmap_deinit_, kv_t)
-#define hashmap_reserve_fn(kv_t) nodelist_reserve_fn(kv_t)
 #define hashmap_add_fn(kv_t) CONCAT(hashmap_add_, kv_t)
 #define hashmap_del_fn(kv_t) CONCAT(hashmap_del_, kv_t)
 #define hashmap_lookup_fn(kv_t) CONCAT(hashmap_lookup_, kv_t)
@@ -20,16 +19,18 @@
 		.array = dynarray_init(size_t, sl), \
 		.list = nodelist_init(keyval_t(key_t, val_t), sz).pool \
 	}
+#define hashmap_reserve(map_ref, sz) \
+	hashmap_type(nodelist_reserve_fn, \
+		     (map_ref)->list.array.arena.ptr->elt)( \
+	    &(map_ref)->list.array.arena, sz)
+
 #define hashmap_associated(hashmap_fn, map_ref, ...) \
-	hashmap_type(hashmap_fn, (map_ref)->list.array.ptr->elt)( \
+	hashmap_type(hashmap_fn, (map_ref)->list.array.arena.ptr->elt)( \
 	    map_ref __VA_OPT__(, ) __VA_ARGS__)
 #define hashmap_trait(hashmap_fn, map, ...) \
-	hashmap_type(hashmap_fn, (map).list.array.ptr->elt)(map __VA_OPT__(, ) \
-								__VA_ARGS__)
+	hashmap_type(hashmap_fn, (map).list.array.arena.ptr->elt)( \
+	    map __VA_OPT__(, ) __VA_ARGS__)
 #define hashmap_deinit(map_ref) hashmap_associated(hashmap_deinit_fn, map_ref)
-#define hashmap_reserve(map_ref, sz) \
-	hashmap_type(hashmap_reserve_fn, (map_ref)->list.array.ptr->elt)( \
-	    &(map_ref)->list.array, sz)
 #define hashmap_add(map_ref, elt) \
 	hashmap_associated(hashmap_add_fn, map_ref, elt)
 #define hashmap_del(map_ref, key) \
@@ -69,7 +70,7 @@
 	void hashmap_add_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, keyval_t(key_t, val_t) elt) { \
 		size_t slot = \
-		    hashmap_hash(elt.key) & (map->array.capacity - 1); \
+		    hashmap_hash(elt.key) & (map->array.arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
 		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
 		map->array.size += (node.head == 0); \
@@ -79,7 +80,7 @@
 	} \
 	void hashmap_del_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map->array.capacity - 1); \
+		size_t slot = hashmap_hash(key) & (map->array.arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
 		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
 		for (size_t prev = 0, head = node.head; head; \
@@ -95,7 +96,7 @@
 	} \
 	val_t hashmap_lookup_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map.array.capacity - 1); \
+		size_t slot = hashmap_hash(key) & (map.array.arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
 		    .head = dynarray_at(map.array, slot), .pool = map.list}; \
 		for (size_t head = node.head; head; \
@@ -108,7 +109,7 @@
 	} \
 	val_t * hashmap_at_fn(keyval_t(key_t, val_t))( \
 	    hashmap_t(key_t, val_t) * map, key_t key) { \
-		size_t slot = hashmap_hash(key) & (map->array.capacity - 1); \
+		size_t slot = hashmap_hash(key) & (map->array.arena.storage - 1); \
 		nodelist_t(keyval_t(key_t, val_t)) node = { \
 		    .head = dynarray_at(map->array, slot), .pool = map->list}; \
 		for (size_t head = node.head; head; \

@@ -8,6 +8,7 @@ to generate new template functions.
 
 ## Containers
 
+- [x] `arena.h`
 - [x] `dynarray.h`
 - [x] `nodelist.h`
 - [x] `hashmap.h`

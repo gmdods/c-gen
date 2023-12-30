@@ -11,14 +11,14 @@
 
 unittest("dynarray : init reserve add deinit") {
 	dynarray_t(int) array = dynarray_init(int, 1);
-	ensure(array.ptr != NULL);
+	ensure(array.arena.ptr != NULL);
 	ensure(array.size == 0);
-	ensure(array.capacity == 1);
+	ensure(array.arena.storage == 1);
 
 	dynarray_add(&array, 0);
 	dynarray_at(array, 0) = 42;
 	dynarray_reserve(&array, 10);
-	ensure(array.ptr != NULL);
+	ensure(array.arena.ptr != NULL);
 
 	for (size_t i = 0; i != 10; ++i) {
 		dynarray_add(&array, i + 1);
@@ -31,12 +31,12 @@ unittest("dynarray : init reserve add deinit") {
 	}
 
 	dynarray_deinit(&array);
-	ensure(array.ptr == NULL);
+	ensure(array.arena.ptr == NULL);
 }
 
 unittest("nodelist") {
 	nodelist_t(uint) list = nodelist_init(uint, 8);
-	ensure(list.pool.array.ptr != NULL);
+	ensure(list.pool.array.arena.ptr != NULL);
 	const size_t nodes = 10;
 	for (size_t i = 1; i != nodes; ++i) {
 		nodelist_cons(&list, 4 * i + 1);
@@ -82,7 +82,7 @@ unittest("nodelist") {
 	}
 
 	nodelist_deinit(&list);
-	ensure(list.pool.array.ptr == NULL);
+	ensure(list.pool.array.arena.ptr == NULL);
 }
 
 unittest("hashmap") {
@@ -104,8 +104,8 @@ unittest("hashmap") {
 	ensure(map.array.size == 0);
 
 	hashmap_deinit(&map);
-	ensure(map.array.ptr == NULL);
-	ensure(map.list.array.ptr == NULL);
+	ensure(map.array.arena.ptr == NULL);
+	ensure(map.list.array.arena.ptr == NULL);
 }
 
 unittest("string hashmap") {

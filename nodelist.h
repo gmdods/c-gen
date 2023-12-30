@@ -10,13 +10,13 @@
 #define nodelist_pool_t(type_t) struct CONCAT(nodelist_pool_, type_t)
 
 #define nodelist_deinit_fn(type_t) CONCAT(nodelist_deinit_, type_t)
-#define nodelist_reserve_fn(type_t) dynarray_reserve_fn(node_t(type_t))
+#define nodelist_reserve_fn(type_t) arena_reserve_fn(node_t(type_t))
 #define nodelist_cons_fn(type_t) CONCAT(nodelist_cons_, type_t)
 #define nodelist_insert_fn(type_t) CONCAT(nodelist_insert_, type_t)
 #define nodelist_uncons_fn(type_t) CONCAT(nodelist_uncons_, type_t)
 #define nodelist_remove_fn(type_t) CONCAT(nodelist_remove_, type_t)
 
-#define nodelist_node(list, pos) (list).pool.array.ptr[(pos) -1]
+#define nodelist_node(list, pos) dynarray_at((list).pool.array, (pos) -1)
 #define nodelist_at(list, pos) nodelist_node(list, pos).elt
 #define nodelist_link(list, pos) nodelist_node(list, pos).index
 
@@ -26,14 +26,16 @@
 			.array = dynarray_init(node_t(type), sz) \
 		} \
 	}
+#define nodelist_reserve(list_ref, sz) \
+	nodelist_type(nodelist_reserve_fn, \
+		      (list_ref)->pool.array.arena.ptr->elt)( \
+	    &(list_ref)->pool.array.arena, sz)
+
 #define nodelist_associated(nodelist_fn, list_ref, ...) \
-	nodelist_type(nodelist_fn, (list_ref)->pool.array.ptr->elt)( \
+	nodelist_type(nodelist_fn, (list_ref)->pool.array.arena.ptr->elt)( \
 	    list_ref __VA_OPT__(, ) __VA_ARGS__)
 #define nodelist_deinit(list_ref) \
 	nodelist_associated(nodelist_deinit_fn, list_ref)
-#define nodelist_reserve(list_ref, sz) \
-	nodelist_type(nodelist_reserve_fn, (list_ref)->pool.array.ptr->elt)( \
-	    &(list_ref)->pool.array, sz)
 #define nodelist_cons(list_ref, elt) \
 	nodelist_associated(nodelist_cons_fn, list_ref, elt)
 #define nodelist_insert(list_ref, index, elt) \

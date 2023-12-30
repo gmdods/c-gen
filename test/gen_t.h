@@ -9,16 +9,17 @@ typedef unsigned int uint;
 typedef _Bool boolean;
 typedef const char * string;
 
+#include "../arena.h"
 #include "../dynarray.h"
 #include "../hashmap.h"
 #include "../nodelist.h"
 
-#define dynarray_type(X, type) \
+#define arena_type(X, type) \
 	_Generic(type, int: X(int), size_t: X(size_t), double: X(double))
-#define dynarray_types(X) X(int) X(size_t) X(double) static_assert(1, #X)
+#define arena_types(X) X(int) X(size_t) X(double) static_assert(1, #X)
 
-dynarray_types(dynarray_declare);
-dynarray_types(dynarray_deduced);
+arena_types(dynarray_declare);
+arena_types(dynarray_deduced);
 
 #define nodelist_type(X, type) _Generic(type, uint: X(uint))
 #define nodelist_types(X) X(uint) static_assert(1, #X)
